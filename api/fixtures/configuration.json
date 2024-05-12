@@ -1,0 +1,15 @@
+[
+  {
+    "model": "api.configuration",
+    "pk": 1,
+    "fields": {
+      "id": 1,
+      "moisture_threshold": 10,
+      "measurement_interval": 600,
+      "pump_duration": 120,
+      "max_consecutive_pumps": 5,
+      "measurement_enabled": true,
+      "pump_enabled": true
+    }
+  }
+]
