@@ -1,4 +1,4 @@
-#Pflaenzli Backend
+# Pflaenzli Backend
 
 This is the backend code for the plant watering project.
 
