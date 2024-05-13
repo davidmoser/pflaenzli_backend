@@ -21,13 +21,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-i2vk@*mq@#paxolpjih2y#mm0&-3+iizm_@gs*efa%z59)wzdr'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# For deployment, set to False
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
 APPEND_SLASH = False
 
+# For deployment, replace with http://<YOUR SERVER IP>
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
     'http://localhost:5173',
