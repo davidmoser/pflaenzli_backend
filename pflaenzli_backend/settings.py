@@ -24,13 +24,15 @@ SECRET_KEY = 'django-insecure-i2vk@*mq@#paxolpjih2y#mm0&-3+iizm_@gs*efa%z59)wzdr
 # For deployment, set to False
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# For deployment, replace with <YOUR SERVER IP OR URL>
+ALLOWED_HOSTS = [
+    'localhost',
+]
 
 APPEND_SLASH = False
 
-# For deployment, replace with http://<YOUR SERVER IP>
+# For deployment, replace with http://<YOUR SERVER IP OR URL>
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8000',
     'http://localhost:5173',
 ]
 
