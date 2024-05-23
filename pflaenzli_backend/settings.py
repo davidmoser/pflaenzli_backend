@@ -131,3 +131,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Address of the arduino
+ARDUINO_ADDRESS = '192.168.68.112'
+ARDUINO_ENABLED = not DEBUG
