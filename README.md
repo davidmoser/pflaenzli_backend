@@ -30,5 +30,6 @@ It receives moisture and pump data from the Arduino, and stores and provides the
 - Stash the settings if not committed
 - Pull the code
 - Pop the settings, check them
-- Update the model: `python manage.py migrate`
+- (if model changed) Activate the python environment: `source venv/bin/activate`
+- (if model changed) Update the model: `python manage.py migrate`
 - Start the service: `sudo systemctl start pflaenzli_backend.service` 
