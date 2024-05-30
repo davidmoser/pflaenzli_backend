@@ -22,6 +22,7 @@ class Configuration(models.Model):
     measurement_interval = models.IntegerField(help_text="Interval in seconds")
     pump_enabled = models.BooleanField(default=True)
     pump_duration = models.IntegerField(help_text="Duration in seconds")
+    valve_duration = models.IntegerField(help_text="Duration in seconds")
     max_consecutive_pumps = models.IntegerField(default=0)
     moisture_threshold = models.IntegerField(default=0)
 

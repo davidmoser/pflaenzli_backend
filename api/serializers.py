@@ -20,6 +20,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         model = Configuration
         fields = [
             'id',
-            'moisture_threshold', 'measurement_interval', 'pump_duration',
+            'moisture_threshold', 'measurement_interval', 'pump_duration', 'valve_duration',
             'max_consecutive_pumps', 'measurement_enabled', 'pump_enabled'
         ]

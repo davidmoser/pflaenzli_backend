@@ -23,4 +23,12 @@ It receives moisture and pump data from the Arduino, and stores and provides the
 - Enable at boot: `sudo systemctl enable pflaenzli_backend.service`
 - Start the service: `sudo systemctl start pflaenzli_backend.service`
 - Check the status: `sudo systemctl status pflaenzli_backend.service`
-- Check the logs: `sudo journalctl -u gunicorn.service`
+- Check the logs: `sudo journalctl -u pflaenzli_backend.service`
+
+## Redeployment
+- Stop the service: `sudo systemctl stop pflaenzli_backend.service`
+- Stash the settings if not committed
+- Pull the code
+- Pop the settings, check them
+- Update the model: `python manage.py migrate`
+- Start the service: `sudo systemctl start pflaenzli_backend.service` 
