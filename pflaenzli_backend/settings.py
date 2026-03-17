@@ -22,18 +22,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-i2vk@*mq@#paxolpjih2y#mm0&-3+iizm_@gs*efa%z59)wzdr'
 
 # For deployment, set to False
-DEBUG = True
+DEBUG = False
 
 # For deployment, replace with <YOUR SERVER IP OR URL>
 ALLOWED_HOSTS = [
-    'localhost',
+  '192.168.68.111',
+  'pumped-grackle-ideally.ngrok-free.app',
 ]
 
 APPEND_SLASH = False
 
 # For deployment, replace with http://<YOUR SERVER IP OR URL>
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
+    'http://192.168.68.111',
+    'http://pumped-grackle-ideally.ngrok-free.app',
 ]
 
 # Application definition
@@ -133,5 +135,5 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Address of the arduino
-ARDUINO_ADDRESS = '192.168.1.112'
+ARDUINO_ADDRESS = '192.168.68.112'
 ARDUINO_ENABLED = not DEBUG
