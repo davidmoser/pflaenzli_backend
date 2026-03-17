@@ -1,22 +1,34 @@
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 
 from . import actions
 from .models import MoistureReading, PumpAction, Configuration
 from .serializers import ConfigurationSerializer, MoistureReadingSerializer, PumpActionSerializer
 
 
+class StrictQueryParamMixin:
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        allowed = set(self.filterset_class.get_filters().keys())
+        unknown = set(request.query_params.keys()) - allowed
+        if unknown:
+            raise ValidationError(
+                {"detail": f"Unknown query parameter(s): {', '.join(sorted(unknown))}"}
+            )
+
+
 class MoistureReadingFilter(filters.FilterSet):
-    start_time = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
-    end_time = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
+    start = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
+    end = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
 
     class Meta:
         model = MoistureReading
-        fields = ['start_time', 'end_time']
+        fields = ['start', 'end']
 
 
-class MoistureReadingViewSet(viewsets.ModelViewSet):
+class MoistureReadingViewSet(StrictQueryParamMixin, viewsets.ModelViewSet):
     queryset = MoistureReading.objects.all()
     serializer_class = MoistureReadingSerializer
     filter_backends = (filters.DjangoFilterBackend,)
@@ -28,15 +40,15 @@ class MoistureReadingViewSet(viewsets.ModelViewSet):
 
 
 class PumpActionFilter(filters.FilterSet):
-    start_time = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
-    end_time = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
+    start = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
+    end = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
 
     class Meta:
         model = PumpAction
-        fields = ['start_time', 'end_time']
+        fields = ['start', 'end']
 
 
-class PumpActionViewSet(viewsets.ModelViewSet):
+class PumpActionViewSet(StrictQueryParamMixin, viewsets.ModelViewSet):
     queryset = PumpAction.objects.all()
     serializer_class = PumpActionSerializer
     filter_backends = (filters.DjangoFilterBackend,)
