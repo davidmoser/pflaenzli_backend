@@ -36,9 +36,6 @@ def stop_pump():
     return put_to_arduino(address("pump/stop"))
 
 
-def reset_consecutive_pumps():
-    return put_to_arduino(address("pump/reset"))
-
 
 def put_to_arduino(url, data=None):
     if not settings.ARDUINO_ENABLED:

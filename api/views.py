@@ -62,10 +62,6 @@ class PumpActionViewSet(StrictQueryParamMixin, viewsets.ModelViewSet):
     def stop(self, request):
         return actions.stop_pump()
 
-    @action(detail=False, methods=['put'])
-    def reset(self, request):
-        return actions.reset_consecutive_pumps()
-
 
 class ConfigurationView(viewsets.ModelViewSet):
     queryset = Configuration.objects.all()
