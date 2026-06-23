@@ -17,13 +17,19 @@ Including another URLconf
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from api.views import MoistureReadingViewSet, PumpActionViewSet, ConfigurationView
+from api.views import (
+    MoistureReadingViewSet, PumpActionViewSet, ConfigurationView,
+    ScheduledPumpActionViewSet, internal_tick,
+)
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'sensor', MoistureReadingViewSet)
 router.register(r'pump', PumpActionViewSet)
 router.register(r'configuration', ConfigurationView)
+router.register(r'schedule', ScheduledPumpActionViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    # Internal scheduler tick: outside /api/ so nginx/ngrok cannot reach it.
+    path('internal/tick', internal_tick),
 ]

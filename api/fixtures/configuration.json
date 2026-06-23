@@ -8,7 +8,13 @@
       "pump_duration": 120,
       "valve_duration": 7,
       "measurement_enabled": true,
-      "pump_enabled": true
+      "pump_enabled": true,
+      "pump_seconds_per_mm": 10.0,
+      "calc_time": "06:00:00",
+      "window_start": "07:00:00",
+      "window_end": "20:00:00",
+      "latitude": 47.3769,
+      "longitude": 8.5417
     }
   }
 ]

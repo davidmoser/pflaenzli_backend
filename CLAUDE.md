@@ -38,8 +38,14 @@ Single Django app (`api`) with Django REST Framework. All URLs are registered vi
 ### Models
 
 - **MoistureReading** — timestamped soil moisture value (integer)
-- **PumpAction** — timestamped pump on/off event (boolean)
-- **Configuration** — singleton (pk=1) with runtime parameters: `measurement_interval`, `pump_duration`, `valve_duration`, `measurement_enabled`, `pump_enabled`
+- **PumpAction** — timestamped pump on/off action (boolean); rows are written when the Arduino reports its real state via `POST /api/pump` (for both manual and scheduled waterings — the manual endpoint and the dispatcher only relay the start command to the Arduino)
+- **ScheduledPumpAction** — one planned, not-yet-executed pump action for the current day (time only); fired and deleted by the dispatcher
+- **Schedule** — one row per planning day (distinct from `ScheduledPumpAction`); snapshots that day's ET0 (`schedule_date`, `et0`). Its existence marks "today already planned"
+- **Configuration** — singleton (pk=1) with runtime parameters: `measurement_interval`, `pump_duration`, `valve_duration`, `measurement_enabled`, `pump_enabled`, plus irrigation planning: `pump_seconds_per_mm` (pump runtime in seconds needed per mm of ET0), `calc_time`, `window_start`/`window_end`, `latitude`/`longitude` (the per-event pump runtime reuses `pump_duration`)
+
+### Irrigation services
+
+Real logic lives in plain service modules, not views: `api/planner.py` (Open-Meteo ET0 fetch + daily plan; `events_for_et0()` converts the day's ET0 into a number of pump events, then writes a `Schedule` row and the spread `ScheduledPumpAction`s), `api/dispatcher.py` (`tick()` — plan if today has no `Schedule`, then fire one pump cycle if any action is due; overdue actions collapse into a single watering and the due actions are cleared). The tick endpoint and `python manage.py tick` both call `dispatcher.tick()`. The watering time needed is `et0_mm * pump_seconds_per_mm` seconds; `events_for_et0()` divides that by `pump_duration` (the per-event runtime) and rounds up to get the number of pump events.
 
 ### API Endpoints
 
@@ -54,6 +60,8 @@ All endpoints are under `/api/`:
 | `PUT /api/pump/stop` | Stop pump on Arduino |
 | `GET/PUT /api/configuration/1` | Read/update configuration (also pushes to Arduino on update) |
 | `GET /api/configuration/retrieve_from_arduino` | Fetch live config from Arduino |
+| `GET/POST/PUT/DELETE /api/schedule` | Today's scheduled pump actions (time only) |
+| `POST /internal/tick` | Internal scheduler tick (localhost-only; outside `/api/`) |
 
 ### Arduino Communication (`api/actions.py`)
 

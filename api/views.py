@@ -1,11 +1,17 @@
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
-from . import actions
-from .models import MoistureReading, PumpAction, Configuration
-from .serializers import ConfigurationSerializer, MoistureReadingSerializer, PumpActionSerializer
+from . import actions, dispatcher
+from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction
+from .serializers import (
+    ConfigurationSerializer, MoistureReadingSerializer, PumpActionSerializer,
+    ScheduledPumpActionSerializer,
+)
 
 
 class StrictQueryParamMixin:
@@ -75,3 +81,26 @@ class ConfigurationView(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def retrieve_from_arduino(self, request):
         return actions.retrieve_configuration()
+
+
+class ScheduledPumpActionViewSet(viewsets.ModelViewSet):
+    queryset = ScheduledPumpAction.objects.all()
+    serializer_class = ScheduledPumpActionSerializer
+
+
+def _is_localhost(request):
+    return request.META.get('REMOTE_ADDR') in ('127.0.0.1', '::1')
+
+
+@csrf_exempt
+@require_POST
+def internal_tick(request):
+    """Internal scheduler tick. Localhost-only.
+
+    Mounted outside /api/ so it is not reachable through the nginx reverse proxy
+    (and therefore not through ngrok); access is restricted to 127.0.0.1/::1.
+    """
+    if not _is_localhost(request):
+        return JsonResponse({'detail': 'Forbidden'}, status=403)
+    fired = dispatcher.tick()
+    return JsonResponse({'status': 'ok', 'fired': fired})
