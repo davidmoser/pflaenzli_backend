@@ -12,5 +12,5 @@ class Command(BaseCommand):
     help = "Run one scheduler tick (plan if due, fire due actions)."
 
     def handle(self, *args, **options):
-        fired = dispatcher.tick()
-        self.stdout.write(self.style.SUCCESS(f"Tick complete, fired {fired} action(s)."))
+        planned, pump_action = dispatcher.tick()
+        self.stdout.write(self.style.SUCCESS(f"Tick complete. planned {planned}, pump action {pump_action}"))

@@ -19,14 +19,15 @@ from rest_framework.routers import DefaultRouter
 
 from api.views import (
     MoistureReadingViewSet, PumpActionViewSet, ConfigurationView,
-    ScheduledPumpActionViewSet, internal_tick,
+    ScheduledPumpActionViewSet, ScheduleViewSet, internal_tick,
 )
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'sensor', MoistureReadingViewSet)
 router.register(r'pump', PumpActionViewSet)
 router.register(r'configuration', ConfigurationView)
-router.register(r'schedule', ScheduledPumpActionViewSet)
+router.register(r'scheduled-pump', ScheduledPumpActionViewSet)
+router.register(r'schedule', ScheduleViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),

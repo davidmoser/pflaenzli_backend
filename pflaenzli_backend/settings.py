@@ -12,31 +12,29 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 
+import environ
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# Environment-specific settings come from environment variables, with no defaults: the app
+# fails to start if any is missing. For local development a .env file (gitignored) is
+# loaded; in production the deploy sets these vars (see the systemd unit). See .env.example
+# for the full list.
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-i2vk@*mq@#paxolpjih2y#mm0&-3+iizm_@gs*efa%z59)wzdr'
+SECRET_KEY = env('SECRET_KEY')
 
-# For deployment, set to False
-DEBUG = False
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env.bool('DEBUG')
 
-# For deployment, replace with <YOUR SERVER IP OR URL>
-ALLOWED_HOSTS = [
-  '192.168.68.111',
-  'pumped-grackle-ideally.ngrok-free.app',
-]
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
 APPEND_SLASH = False
 
-# For deployment, replace with http://<YOUR SERVER IP OR URL>
-CORS_ALLOWED_ORIGINS = [
-    'http://192.168.68.111',
-    'http://pumped-grackle-ideally.ngrok-free.app',
-]
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 
 # Application definition
 
@@ -134,6 +132,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Address of the arduino
-ARDUINO_ADDRESS = '192.168.68.112'
-ARDUINO_ENABLED = not DEBUG
+# Address of the arduino (independent of DEBUG; set ARDUINO_ENABLED per environment).
+ARDUINO_ADDRESS = env('ARDUINO_ADDRESS')
+ARDUINO_ENABLED = env.bool('ARDUINO_ENABLED')

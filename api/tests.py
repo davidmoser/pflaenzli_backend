@@ -134,9 +134,10 @@ class DispatcherTests(TestCase):
             ScheduledPumpAction.objects.create(time=datetime.time(hour, 0))
 
         with mock.patch.object(planner, 'local_now', return_value=self.now):
-            fired = dispatcher.tick()
+            planned, pump_action = dispatcher.tick()
 
-        self.assertEqual(fired, 1)
+        self.assertFalse(planned)  # today already planned in setUp
+        self.assertTrue(pump_action)
         mock_start_pump.assert_called_once_with()
         # The PumpAction row is written by the Arduino's POST /api/pump, not the dispatcher.
         self.assertEqual(ScheduledPumpAction.objects.count(), 0)
@@ -146,8 +147,9 @@ class DispatcherTests(TestCase):
         ScheduledPumpAction.objects.create(time=datetime.time(15, 0))  # after noon
 
         with mock.patch.object(planner, 'local_now', return_value=self.now):
-            fired = dispatcher.tick()
+            planned, pump_action = dispatcher.tick()
 
-        self.assertEqual(fired, 0)
+        self.assertFalse(planned)  # today already planned in setUp
+        self.assertFalse(pump_action)
         mock_start_pump.assert_not_called()
         self.assertEqual(ScheduledPumpAction.objects.count(), 1)

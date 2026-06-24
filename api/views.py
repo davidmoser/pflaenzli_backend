@@ -5,12 +5,13 @@ from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from . import actions, dispatcher
-from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction
+from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction, Schedule
 from .serializers import (
     ConfigurationSerializer, MoistureReadingSerializer, PumpActionSerializer,
-    ScheduledPumpActionSerializer,
+    ScheduledPumpActionSerializer, ScheduleSerializer,
 )
 
 
@@ -88,6 +89,13 @@ class ScheduledPumpActionViewSet(viewsets.ModelViewSet):
     serializer_class = ScheduledPumpActionSerializer
 
 
+class ScheduleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Schedule.objects.all()
+    serializer_class = ScheduleSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ['schedule_date']
+
+
 def _is_localhost(request):
     return request.META.get('REMOTE_ADDR') in ('127.0.0.1', '::1')
 
@@ -102,5 +110,5 @@ def internal_tick(request):
     """
     if not _is_localhost(request):
         return JsonResponse({'detail': 'Forbidden'}, status=403)
-    fired = dispatcher.tick()
-    return JsonResponse({'status': 'ok', 'fired': fired})
+    planned, pump_action = dispatcher.tick()
+    return JsonResponse({'status': 'ok', 'planned': planned, "pump_action": pump_action})

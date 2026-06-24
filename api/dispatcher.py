@@ -15,18 +15,19 @@ def tick():
     """One scheduler tick: maybe plan today, then fire one pump cycle if any action is due."""
     config = planner.get_config()
 
-    _maybe_plan(config)
-    fired = _fire_due_actions(config)
-    return fired
+    planned = _maybe_plan(config)
+    pump_action = _fire_due_actions(config)
+    return planned, pump_action
 
 
 def _maybe_plan(config):
     now = planner.local_now()
     if Schedule.objects.filter(schedule_date=now.date()).exists():
-        return
+        return False
     if now.time() < config.calc_time:
-        return
+        return False
     planner.plan_today(config=config)
+    return True
 
 
 def _fire_due_actions(config):
@@ -45,10 +46,10 @@ def _fire_due_actions(config):
     due = ScheduledPumpAction.objects.filter(time__lte=now_time)
     count = due.count()
     if not count:
-        return 0
+        return False
 
     actions.start_pump()
     due.delete()
 
     logger.info("Fired pump for %ss (cleared %d due action(s))", config.pump_duration, count)
-    return 1
+    return True

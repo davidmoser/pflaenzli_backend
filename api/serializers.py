@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction
+from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction, Schedule
 
 
 class MoistureReadingSerializer(serializers.ModelSerializer):
@@ -19,6 +19,12 @@ class ScheduledPumpActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScheduledPumpAction
         fields = ['id', 'time']
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Schedule
+        fields = '__all__'
 
 
 class ConfigurationSerializer(serializers.ModelSerializer):
