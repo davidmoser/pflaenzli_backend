@@ -5,6 +5,9 @@ class MoistureReading(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     moisture_level = models.IntegerField()
 
+    class Meta:
+        ordering = ['timestamp']
+
     def __str__(self):
         return f"{self.timestamp} - Moisture Level: {self.moisture_level}"
 
@@ -12,6 +15,9 @@ class MoistureReading(models.Model):
 class PumpAction(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     action = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['timestamp']
 
     def __str__(self):
         return f"{self.timestamp} - Pump Action: {self.action}"
@@ -37,7 +43,7 @@ class Schedule(models.Model):
     et0 = models.FloatField(help_text="Reference evapotranspiration used (mm)")
 
     class Meta:
-        ordering = ['-schedule_date']
+        ordering = ['schedule_date']
 
     def __str__(self):
         return f"Schedule for {self.schedule_date}"

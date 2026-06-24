@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('et0', models.FloatField(help_text='Reference evapotranspiration used (mm)')),
             ],
             options={
-                'ordering': ['-schedule_date'],
+                'ordering': ['schedule_date'],
             },
         ),
         migrations.CreateModel(
@@ -65,5 +65,13 @@ class Migration(migrations.Migration):
             model_name='configuration',
             name='pump_duration',
             field=models.IntegerField(help_text='Active pump runtime in seconds (also the per-action duration when scheduling)'),
+        ),
+        migrations.AlterModelOptions(
+            name='moisturereading',
+            options={'ordering': ['timestamp']},
+        ),
+        migrations.AlterModelOptions(
+            name='pumpaction',
+            options={'ordering': ['timestamp']},
         ),
     ]

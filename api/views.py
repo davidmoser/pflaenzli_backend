@@ -89,11 +89,20 @@ class ScheduledPumpActionViewSet(viewsets.ModelViewSet):
     serializer_class = ScheduledPumpActionSerializer
 
 
-class ScheduleViewSet(viewsets.ReadOnlyModelViewSet):
+class ScheduleFilter(filters.FilterSet):
+    start = filters.DateFilter(field_name='schedule_date', lookup_expr='gte')
+    end = filters.DateFilter(field_name='schedule_date', lookup_expr='lte')
+
+    class Meta:
+        model = Schedule
+        fields = ['start', 'end']
+
+
+class ScheduleViewSet(StrictQueryParamMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ['schedule_date']
+    filterset_class = ScheduleFilter
 
 
 def _is_localhost(request):
