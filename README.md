@@ -12,8 +12,9 @@ It receives moisture and pump data from the Arduino, and stores and provides the
 - Activate the python environment: `source venv/bin/activate`
 - Create the db tables: `python manage.py migrate`
 - Create the configuration: `python manage.py loaddata configuration`
-- Set `DEBUG = False` in `settings.py`
-- Set `CORS_ALLOWED_ORIGINS = ['<YOUR SERVER IP>']` in `settings.py`
+- Create `.env` file from `.env.example`
+- Set `DEBUG = False` in `.env`
+- Set `CORS_ALLOWED_ORIGINS = ['<YOUR SERVER IP>']` in `.env`
 - Install gunicorn: `pip install gunicorn`
 - Run gunicorn to test: `gunicorn pflaenzli_backend.wsgi --bind 0.0.0.0:8000`
 - If it works, install as a service:
@@ -43,9 +44,8 @@ For manual debugging you can run one tick directly: `python manage.py tick`.
 
 ## Redeployment
 - Stop the service: `sudo systemctl stop pflaenzli_backend.service`
-- Stash the settings if not committed
 - Pull the code
-- Pop the settings, check them
+- (if there are new dependencies) Install with `pip install -r requirements.txt`
 - (if model changed) Activate the python environment: `source venv/bin/activate`
 - (if model changed) Update the model: `python manage.py migrate`
 - Start the service: `sudo systemctl start pflaenzli_backend.service`
