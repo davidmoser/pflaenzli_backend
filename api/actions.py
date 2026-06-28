@@ -3,6 +3,11 @@ from rest_framework.response import Response
 
 from pflaenzli_backend import settings
 
+# Seconds to wait for the Arduino before giving up. Without a timeout an
+# unreachable Arduino hangs the gunicorn worker until it is killed (WORKER
+# TIMEOUT), degrading the whole backend (2026-06-28 incident).
+ARDUINO_TIMEOUT = 5
+
 
 def address(action):
     return f"http://{settings.ARDUINO_ADDRESS}/{action}"
@@ -12,7 +17,7 @@ def retrieve_configuration():
     if not settings.ARDUINO_ENABLED:
         return Response(f"Arduino requests disabled", status=500)
     try:
-        response = requests.get(address("configuration"))
+        response = requests.get(address("configuration"), timeout=ARDUINO_TIMEOUT)
         response.raise_for_status()  # This will raise an exception for HTTP errors
         return Response(response.json())
     except requests.RequestException as e:
@@ -42,7 +47,7 @@ def put_to_arduino(url, data=None):
         return Response({'status': 'ok'})
     headers = {"Content-Type": "application/json"}
     try:
-        response = requests.put(url, json=data, headers=headers)
+        response = requests.put(url, json=data, headers=headers, timeout=ARDUINO_TIMEOUT)
         response.raise_for_status()  # This will raise an exception for HTTP errors
         response.json()  # Make sure response is properly formatted
         return Response({'status': 'ok'})
