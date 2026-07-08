@@ -7,16 +7,14 @@ It receives moisture and pump data from the Arduino, and stores and provides the
 ## Deployment
 
 - Pull the `pflaenzli_backend` code from github to the server
-- Install python, pip and venv: `sudo apt install python3 python3-pip python3-venv -y`
-- Create the python environment: `python3 -m venv venv`
-- Activate the python environment: `source venv/bin/activate`
-- Create the db tables: `python manage.py migrate`
-- Create the configuration: `python manage.py loaddata configuration`
+- Install [uv](https://docs.astral.sh/uv/): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Create the environment and install dependencies (incl. gunicorn): `uv sync`
+- Create the db tables: `uv run python manage.py migrate`
+- Create the configuration: `uv run python manage.py loaddata configuration`
 - Create `.env` file from `.env.example`
 - Set `DEBUG = False` in `.env`
 - Set `CORS_ALLOWED_ORIGINS = ['<YOUR SERVER IP>']` in `.env`
-- Install gunicorn: `pip install gunicorn`
-- Run gunicorn to test: `gunicorn pflaenzli_backend.wsgi --bind 0.0.0.0:8000`
+- Run gunicorn to test: `uv run gunicorn pflaenzli_backend.wsgi --bind 0.0.0.0:8000`
 - If it works, install as a service:
 - Copy `pflaenzli_backend.service` to `/etc/systemd/system/`
 - Adjust `<ENTER PROJECT PATH>` to the location where the git project was cloned to
@@ -32,7 +30,6 @@ It receives moisture and pump data from the Arduino, and stores and provides the
 ## Redeployment
 - Stop the service: `sudo systemctl stop pflaenzli_backend.service`
 - Pull the code
-- (if there are new dependencies) Install with `pip install -r requirements.txt`
-- (if model changed) Activate the python environment: `source venv/bin/activate`
-- (if model changed) Update the model: `python manage.py migrate`
+- (if there are new dependencies) Sync the environment: `uv sync`
+- (if model changed) Update the model: `uv run python manage.py migrate`
 - Start the service: `sudo systemctl start pflaenzli_backend.service`

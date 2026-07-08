@@ -6,7 +6,7 @@ After=network.target
 User=pie
 Group=www-data
 WorkingDirectory=/<ENTER PROJECT PATH>/pflaenzli_backend
-ExecStart=/<ENTER PROJECT PATH>/pflaenzli_backend/venv/bin/gunicorn --bind 0.0.0.0:8000 pflaenzli_backend.wsgi
+ExecStart=/<ENTER PROJECT PATH>/pflaenzli_backend/.venv/bin/gunicorn --bind 0.0.0.0:8000 pflaenzli_backend.wsgi
 
 Restart=on-failure
 RestartSec=5s

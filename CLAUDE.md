@@ -8,25 +8,27 @@ Pflaenzli Backend is a Django REST API that serves as the hub between an Arduino
 
 ## Development Commands
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`). Run `uv sync` once to create the `.venv`, then prefix commands with `uv run` (or activate `.venv`).
+
 ```bash
-# Activate virtualenv
-source venv/bin/activate
+# Create/sync the environment from the lockfile
+uv sync
 
 # Run dev server (port 8000)
-python manage.py runserver 0.0.0.0:8000
+uv run python manage.py runserver 0.0.0.0:8000
 
 # Run all tests
-python manage.py test
+uv run python manage.py test
 
 # Run a single test class or method
-python manage.py test api.tests.StrictQueryParamMixinTests
-python manage.py test api.tests.StrictQueryParamMixinTests.test_sensor_unknown_query_param_returns_400
+uv run python manage.py test api.tests.StrictQueryParamMixinTests
+uv run python manage.py test api.tests.StrictQueryParamMixinTests.test_sensor_unknown_query_param_returns_400
 
 # Apply migrations
-python manage.py migrate
+uv run python manage.py migrate
 
 # Load initial configuration fixture
-python manage.py loaddata configuration
+uv run python manage.py loaddata configuration
 ```
 
 No linting or type-checking tools are configured.
