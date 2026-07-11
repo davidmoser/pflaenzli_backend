@@ -21,6 +21,13 @@ from .models import MoistureReading, PumpAction
 logger = logging.getLogger(__name__)
 
 
+def _fmt(ts):
+    """Format a UTC timestamp as local (Zurich) time to the minute, or 'never'."""
+    if ts is None:
+        return "never"
+    return ts.astimezone(planner.LOCAL_TZ).strftime("%Y-%m-%d %H:%M")
+
+
 def _ping(base_url, failed, data):
     """POST to the success URL, or base_url + '/fail' when ``failed``. Never raises."""
     if not base_url:
@@ -41,6 +48,13 @@ def report(config, error=None):
     if not settings.HEALTHCHECKS_URL:
         return
 
+    # The tick runs every minute; only actually ping every HC_PING_INTERVAL_MINUTES so the
+    # healthchecks event log stays readable. Stateless: keyed off the wall clock.
+    local = planner.local_now()
+    interval = settings.HC_PING_INTERVAL_MINUTES
+    if interval > 0 and local.minute % interval != 0:
+        return
+
     problems = []
     data = {}
     if error is not None:
@@ -48,7 +62,6 @@ def report(config, error=None):
 
     try:
         now = timezone.now()
-        local = planner.local_now()
         in_window = config.window_start <= local.time() <= config.window_end
 
         midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -79,8 +92,8 @@ def report(config, error=None):
 
         data = {
             "pumps_today": pumps_today,
-            "last_measurement": last_measurement.timestamp.isoformat() if last_measurement else "never",
-            "last_pump": last_pump.timestamp.isoformat() if last_pump else "never",
+            "last_measurement": _fmt(last_measurement.timestamp if last_measurement else None),
+            "last_pump": _fmt(last_pump.timestamp if last_pump else None),
         }
     except Exception:
         logger.exception("monitoring self-check failed")

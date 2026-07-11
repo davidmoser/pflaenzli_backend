@@ -136,9 +136,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ARDUINO_ADDRESS = env('ARDUINO_ADDRESS')
 ARDUINO_ENABLED = env.bool('ARDUINO_ENABLED')
 
-# healthchecks.io dead-man's switch. The tick pings this URL each run (or URL/fail on
+# healthchecks.io dead-man's switch. The tick pings this URL regularly (or URL/fail on
 # trouble); an empty URL disables monitoring (e.g. dev without hardware). The Pi-liveness
 # timeout is the check's period + grace, set in the healthchecks.io UI.
 HEALTHCHECKS_URL = env('HEALTHCHECKS_URL')
 HC_ARDUINO_STALE_MINUTES = env.int('HC_ARDUINO_STALE_MINUTES')
 HC_WATERING_STALE_MINUTES = env.int('HC_WATERING_STALE_MINUTES')
+HC_PING_INTERVAL_MINUTES = env.int('HC_PING_INTERVAL_MINUTES')
