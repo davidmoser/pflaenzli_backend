@@ -5,7 +5,7 @@ folded into the tick so a missed run is self-healing.
 """
 import logging
 
-from . import actions, planner
+from . import actions, monitoring, planner
 from .models import Schedule, ScheduledPumpAction
 
 logger = logging.getLogger(__name__)
@@ -15,8 +15,19 @@ def tick():
     """One scheduler tick: maybe plan today, then fire one pump cycle if any action is due."""
     config = planner.get_config()
 
-    planned = _maybe_plan(config)
-    pump_action = _fire_due_actions(config)
+    error = None
+    planned = pump_action = None
+    try:
+        planned = _maybe_plan(config)
+        pump_action = _fire_due_actions(config)
+    except Exception as exc:
+        error = exc
+        logger.exception("tick failed")
+    finally:
+        monitoring.report(config, error=error)
+
+    if error is not None:
+        raise error
     return planned, pump_action
 
 
