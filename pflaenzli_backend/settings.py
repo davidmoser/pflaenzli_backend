@@ -143,3 +143,9 @@ HEALTHCHECKS_URL = env('HEALTHCHECKS_URL')
 HC_ARDUINO_STALE_MINUTES = env.int('HC_ARDUINO_STALE_MINUTES')
 HC_WATERING_STALE_MINUTES = env.int('HC_WATERING_STALE_MINUTES')
 HC_PING_INTERVAL_MINUTES = env.int('HC_PING_INTERVAL_MINUTES')
+
+# Deployment location: the ET0 (Open-Meteo) fetch and all local-time watering-window
+# reasoning. Kept out of source (public repos) — set per environment.
+LATITUDE = env.float('LATITUDE')
+LONGITUDE = env.float('LONGITUDE')
+LOCAL_TIMEZONE = env('LOCAL_TIMEZONE')   # IANA timezone name, e.g. America/New_York

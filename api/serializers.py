@@ -36,5 +36,4 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             'measurement_enabled', 'pump_enabled',
             'pump_seconds_per_mm',
             'calc_time', 'window_start', 'window_end',
-            'latitude', 'longitude',
         ]

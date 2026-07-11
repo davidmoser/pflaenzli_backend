@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='configuration',
             name='latitude',
-            field=models.FloatField(default=47.3769, help_text='Latitude for the ET0 fetch'),
+            field=models.FloatField(default=0.0, help_text='Latitude for the ET0 fetch'),
         ),
         migrations.AddField(
             model_name='configuration',
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='configuration',
             name='longitude',
-            field=models.FloatField(default=8.5417, help_text='Longitude for the ET0 fetch'),
+            field=models.FloatField(default=0.0, help_text='Longitude for the ET0 fetch'),
         ),
         migrations.AddField(
             model_name='configuration',

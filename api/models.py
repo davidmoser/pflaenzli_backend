@@ -66,8 +66,6 @@ class Configuration(models.Model):
         default="07:00", help_text="Start of the watering window")
     window_end = models.TimeField(
         default="20:00", help_text="End of the watering window")
-    latitude = models.FloatField(default=47.3769, help_text="Latitude for the ET0 fetch")
-    longitude = models.FloatField(default=8.5417, help_text="Longitude for the ET0 fetch")
 
     def __str__(self):
         return "System Configuration"

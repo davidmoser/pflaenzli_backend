@@ -1,6 +1,6 @@
 """Daily planner: fetch ET0, compute the day's water demand, and write scheduled actions.
 
-All time-of-day reasoning happens in the project's local timezone (Europe/Zurich),
+All time-of-day reasoning happens in the project's configured local timezone,
 independent of Django's UTC storage.
 """
 import datetime
@@ -9,12 +9,13 @@ import math
 from zoneinfo import ZoneInfo
 
 import requests
+from django.conf import settings
 
 from .models import Configuration, Schedule, ScheduledPumpAction
 
 logger = logging.getLogger(__name__)
 
-LOCAL_TZ = ZoneInfo("Europe/Zurich")
+LOCAL_TZ = ZoneInfo(settings.LOCAL_TIMEZONE)
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
 
@@ -41,16 +42,16 @@ def events_for_et0(pump_seconds_per_mm, event_seconds, et0_mm):
     return math.ceil(et0_mm * pump_seconds_per_mm / event_seconds)
 
 
-def fetch_et0(config, for_date=None):
+def fetch_et0(for_date=None):
     """Fetch today's reference evapotranspiration (mm) from Open-Meteo.
 
     The pots are on a covered balcony, so precipitation is deliberately ignored.
     """
     params = {
-        "latitude": config.latitude,
-        "longitude": config.longitude,
+        "latitude": settings.LATITUDE,
+        "longitude": settings.LONGITUDE,
         "daily": "et0_fao_evapotranspiration",
-        "timezone": "Europe/Zurich",
+        "timezone": settings.LOCAL_TIMEZONE,
         "forecast_days": 1,
     }
     response = requests.get(OPEN_METEO_URL, params=params, timeout=10)
@@ -94,7 +95,7 @@ def plan_today(config=None):
         logger.warning("plan_today: discarding existing Schedule for %s", today)
         Schedule.objects.filter(schedule_date=today).delete()
 
-    et0_mm = fetch_et0(config)
+    et0_mm = fetch_et0()
 
     n_actions = events_for_et0(config.pump_seconds_per_mm, config.pump_duration, et0_mm)
 

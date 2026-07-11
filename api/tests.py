@@ -22,7 +22,7 @@ def make_config(**overrides):
         measurement_enabled=True, pump_enabled=True,
         pump_seconds_per_mm=10.0,
         calc_time=datetime.time(6, 0), window_start=datetime.time(7, 0),
-        window_end=datetime.time(20, 0), latitude=47.3769, longitude=8.5417,
+        window_end=datetime.time(20, 0),
     )
     fields.update(overrides)
     return Configuration.objects.create(**fields)

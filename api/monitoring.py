@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _fmt(ts):
-    """Format a UTC timestamp as local (Zurich) time to the minute, or 'never'."""
+    """Format a UTC timestamp as local time to the minute, or 'never'."""
     if ts is None:
         return "never"
     return ts.astimezone(planner.LOCAL_TZ).strftime("%Y-%m-%d %H:%M")
