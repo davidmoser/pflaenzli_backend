@@ -99,5 +99,10 @@ def report(config, error=None):
         logger.exception("monitoring self-check failed")
         problems.append("monitoring self-check failed")
 
-    data["status"] = " | ".join(problems) if problems else "ok"
-    _ping(settings.HEALTHCHECKS_URL, bool(problems), data)
+    if problems:
+        # On failure, send only the reason — the pumps/measurement info is visible in the
+        # preceding success pings anyway, and keeping the fail body terse makes it scannable.
+        _ping(settings.HEALTHCHECKS_URL, True, {"status": " | ".join(problems)})
+    else:
+        data["status"] = "ok"
+        _ping(settings.HEALTHCHECKS_URL, False, data)
