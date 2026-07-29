@@ -6,6 +6,7 @@ independent of Django's UTC storage.
 import datetime
 import logging
 import math
+import time
 from zoneinfo import ZoneInfo
 
 import requests
@@ -17,6 +18,15 @@ logger = logging.getLogger(__name__)
 
 LOCAL_TZ = ZoneInfo(settings.LOCAL_TIMEZONE)
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+
+# Open-Meteo returns a transient 503 on the morning's first request, then succeeds on the
+# next attempt (see the recurring morning healthcheck blip). One in-tick retry is enough so
+# the blip no longer surfaces as a failed tick / alert. Each failed attempt logs the
+# response body, which carries Open-Meteo's own reason string, for root-cause confirmation.
+# Budget: 2 attempts keep the worst case (10s timeout + 5s delay + 10s timeout = 25s) under
+# gunicorn's 30s worker timeout, so a hung fetch can't get the sole worker killed.
+ET0_FETCH_ATTEMPTS = 2
+ET0_FETCH_RETRY_DELAY = 5
 
 
 def get_config():
@@ -54,9 +64,23 @@ def fetch_et0(for_date=None):
         "timezone": settings.LOCAL_TIMEZONE,
         "forecast_days": 1,
     }
-    response = requests.get(OPEN_METEO_URL, params=params, timeout=10)
-    response.raise_for_status()
-    return response.json()["daily"]["et0_fao_evapotranspiration"][0]
+    for attempt in range(1, ET0_FETCH_ATTEMPTS + 1):
+        try:
+            response = requests.get(OPEN_METEO_URL, params=params, timeout=10)
+            response.raise_for_status()
+            return response.json()["daily"]["et0_fao_evapotranspiration"][0]
+        except requests.RequestException as exc:
+            resp = exc.response
+            logger.warning(
+                "fetch_et0 attempt %d/%d failed: status=%s body=%r err=%s",
+                attempt, ET0_FETCH_ATTEMPTS,
+                getattr(resp, "status_code", None),
+                resp.text[:200] if resp is not None else None,
+                exc,
+            )
+            if attempt == ET0_FETCH_ATTEMPTS:
+                raise
+            time.sleep(ET0_FETCH_RETRY_DELAY)
 
 
 def _spread_times(n_actions, window_start, window_end):

@@ -1,6 +1,7 @@
 import datetime
 from unittest import mock
 
+import requests
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -99,6 +100,46 @@ class PlannerTests(TestCase):
         self.assertEqual(ScheduledPumpAction.objects.count(), 2)
         self.assertEqual(Schedule.objects.count(), 1)
         self.assertEqual(Schedule.objects.get().et0, 10.0)
+
+
+def _ok_response(et0):
+    resp = mock.Mock()
+    resp.raise_for_status.return_value = None
+    resp.json.return_value = {"daily": {"et0_fao_evapotranspiration": [et0]}}
+    return resp
+
+
+def _error_response(status=503):
+    resp = mock.Mock()
+    resp.status_code = status
+    resp.text = "Service Unavailable"
+    resp.raise_for_status.side_effect = requests.HTTPError(response=resp)
+    return resp
+
+
+class FetchEt0Tests(TestCase):
+    @mock.patch.object(planner.time, 'sleep')
+    @mock.patch.object(planner.requests, 'get')
+    def test_retries_transient_error_then_succeeds(self, mock_get, mock_sleep):
+        # The recurring morning symptom: first request 503s, the retry returns the value.
+        mock_get.side_effect = [_error_response(503), _ok_response(4.2)]
+
+        with self.assertLogs('api.planner', level='WARNING'):
+            self.assertEqual(planner.fetch_et0(), 4.2)
+
+        self.assertEqual(mock_get.call_count, 2)
+        mock_sleep.assert_called_once_with(planner.ET0_FETCH_RETRY_DELAY)
+
+    @mock.patch.object(planner.time, 'sleep')
+    @mock.patch.object(planner.requests, 'get')
+    def test_raises_after_exhausting_attempts(self, mock_get, _mock_sleep):
+        mock_get.side_effect = [_error_response(503)] * planner.ET0_FETCH_ATTEMPTS
+
+        with self.assertRaises(requests.HTTPError):
+            with self.assertLogs('api.planner', level='WARNING'):
+                planner.fetch_et0()
+
+        self.assertEqual(mock_get.call_count, planner.ET0_FETCH_ATTEMPTS)
 
 
 class TickEndpointTests(TestCase):
