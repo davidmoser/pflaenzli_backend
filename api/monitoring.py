@@ -9,14 +9,13 @@ This must never raise: a monitoring hiccup must not affect watering (see the pas
 worker-hang incident that motivated ARDUINO_TIMEOUT).
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import requests
 from django.conf import settings
-from django.utils import timezone
 
 from . import planner
-from .models import MoistureReading, PumpAction
+from .models import MoistureReading, PumpAction, ScheduledPumpAction
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +60,7 @@ def report(config, error=None):
         problems.append(f"tick exception: {type(error).__name__}: {error}"[:200])
 
     try:
-        now = timezone.now()
-        in_window = config.window_start <= local.time() <= config.window_end
+        now = local
 
         midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
         pumps_today = PumpAction.objects.filter(
@@ -78,17 +76,21 @@ def report(config, error=None):
                     > timedelta(minutes=settings.HC_ARDUINO_STALE_MINUTES)):
                 problems.append("no arduino contact")
 
-        # No watering for too long during the daytime window. Measure staleness from the
-        # later of the window start and the last pump, so the morning ramp and overnight
-        # gap can't false-alarm.
-        if in_window:
-            ws = config.window_start
-            since = local.replace(hour=ws.hour, minute=ws.minute, second=ws.second,
-                                  microsecond=0)
-            if last_pump is not None and last_pump.timestamp > since:
-                since = last_pump.timestamp
-            if now - since > timedelta(minutes=settings.HC_WATERING_STALE_MINUTES):
-                problems.append("no watering")
+        # The last fired scheduled pump action should be followed by the Arduino reporting
+        # the pump on within the grace period. Pump actions are far more than a ping interval
+        # apart, so checking only the last one covers them all. fired_at is a local time;
+        # yesterday's rows (present until the morning plan) land in the future and are skipped.
+        grace = timedelta(minutes=settings.HC_PUMP_CONFIRM_MINUTES)
+        last_fired = (ScheduledPumpAction.objects.filter(fired_at__isnull=False)
+                      .order_by("-fired_at").first())
+        if last_fired is not None:
+            fired_at = datetime.combine(local.date(), last_fired.fired_at,
+                                        tzinfo=planner.LOCAL_TZ)
+            if (fired_at <= now - grace
+                    and not PumpAction.objects.filter(
+                        action=True, timestamp__gte=fired_at,
+                        timestamp__lte=fired_at + grace).exists()):
+                problems.append(f"pump fired at {last_fired.fired_at:%H:%M} not confirmed")
 
         data = {
             "pumps_today": pumps_today,

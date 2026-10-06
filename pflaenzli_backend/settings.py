@@ -141,7 +141,7 @@ ARDUINO_ENABLED = env.bool('ARDUINO_ENABLED')
 # timeout is the check's period + grace, set in the healthchecks.io UI.
 HEALTHCHECKS_URL = env('HEALTHCHECKS_URL')
 HC_ARDUINO_STALE_MINUTES = env.int('HC_ARDUINO_STALE_MINUTES')
-HC_WATERING_STALE_MINUTES = env.int('HC_WATERING_STALE_MINUTES')
+HC_PUMP_CONFIRM_MINUTES = env.int('HC_PUMP_CONFIRM_MINUTES')
 HC_PING_INTERVAL_MINUTES = env.int('HC_PING_INTERVAL_MINUTES')
 
 # Deployment location: the ET0 (Open-Meteo) fetch and all local-time watering-window

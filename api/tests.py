@@ -2,10 +2,10 @@ import datetime
 from unittest import mock
 
 import requests
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from . import dispatcher, planner
+from . import dispatcher, monitoring, planner
 from .models import (
     Configuration, MoistureReading, PumpAction, Schedule, ScheduledPumpAction,
 )
@@ -181,7 +181,21 @@ class DispatcherTests(TestCase):
         self.assertTrue(pump_action)
         mock_start_pump.assert_called_once_with()
         # The PumpAction row is written by the Arduino's POST /api/pump, not the dispatcher.
-        self.assertEqual(ScheduledPumpAction.objects.count(), 0)
+        # All due actions are stamped with one shared fired_at.
+        fired_at = set(ScheduledPumpAction.objects.values_list('fired_at', flat=True))
+        self.assertEqual(len(fired_at), 1)
+        self.assertIsNotNone(fired_at.pop())
+
+    @mock.patch.object(dispatcher.actions, 'start_pump')
+    def test_already_fired_actions_are_not_refired(self, mock_start_pump):
+        ScheduledPumpAction.objects.create(
+            time=datetime.time(9, 0), fired_at=datetime.time(9, 0))
+
+        with mock.patch.object(planner, 'local_now', return_value=self.now):
+            planned, pump_action = dispatcher.tick()
+
+        self.assertFalse(pump_action)
+        mock_start_pump.assert_not_called()
 
     @mock.patch.object(dispatcher.actions, 'start_pump')
     def test_future_actions_are_not_fired(self, mock_start_pump):
@@ -193,4 +207,74 @@ class DispatcherTests(TestCase):
         self.assertFalse(planned)  # today already planned in setUp
         self.assertFalse(pump_action)
         mock_start_pump.assert_not_called()
-        self.assertEqual(ScheduledPumpAction.objects.count(), 1)
+        self.assertIsNone(ScheduledPumpAction.objects.get().fired_at)
+
+
+@override_settings(HEALTHCHECKS_URL='https://hc.example/ping', HC_PING_INTERVAL_MINUTES=0,
+                   HC_PUMP_CONFIRM_MINUTES=15)
+@mock.patch.object(monitoring, '_ping')
+class PumpConfirmationMonitoringTests(TestCase):
+    def setUp(self):
+        self.config = make_config(measurement_enabled=False)
+        # Pin "now" to noon today so the fired times don't wrap around midnight.
+        self.now = datetime.datetime.combine(
+            planner.local_today(), datetime.time(12, 0), tzinfo=planner.LOCAL_TZ)
+        patcher = mock.patch.object(planner, 'local_now', return_value=self.now)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def fire(self, minutes_ago):
+        fired_at = self.now - datetime.timedelta(minutes=minutes_ago)
+        ScheduledPumpAction.objects.create(
+            time=datetime.time(9, 0), fired_at=fired_at.time())
+        return fired_at
+
+    def report_pump_on(self, at):
+        pump = PumpAction.objects.create(action=True)
+        PumpAction.objects.filter(pk=pump.pk).update(timestamp=at)  # bypass auto_now_add
+
+    def assert_status(self, mock_ping, failed, status):
+        _url, sent_failed, data = mock_ping.call_args.args
+        self.assertEqual(sent_failed, failed)
+        self.assertEqual(data['status'], status)
+
+    def test_confirmed_action_is_ok(self, mock_ping):
+        fired_at = self.fire(minutes_ago=30)
+        self.report_pump_on(fired_at + datetime.timedelta(seconds=10))
+        monitoring.report(self.config)
+        self.assert_status(mock_ping, False, 'ok')
+
+    def test_unconfirmed_action_fails(self, mock_ping):
+        fired_at = self.fire(minutes_ago=30)
+        monitoring.report(self.config)
+        self.assert_status(
+            mock_ping, True, f"pump fired at {fired_at:%H:%M} not confirmed")
+
+    def test_unconfirmed_action_within_grace_is_ok(self, mock_ping):
+        self.fire(minutes_ago=5)
+        monitoring.report(self.config)
+        self.assert_status(mock_ping, False, 'ok')
+
+    def test_pump_before_firing_does_not_confirm(self, mock_ping):
+        fired_at = self.fire(minutes_ago=30)
+        self.report_pump_on(fired_at - datetime.timedelta(minutes=1))
+        monitoring.report(self.config)
+        self.assert_status(
+            mock_ping, True, f"pump fired at {fired_at:%H:%M} not confirmed")
+
+    def test_only_last_fired_action_is_checked(self, mock_ping):
+        self.fire(minutes_ago=90)  # unconfirmed, but no longer the last one
+        fired_at = self.fire(minutes_ago=30)
+        self.report_pump_on(fired_at + datetime.timedelta(seconds=10))
+        monitoring.report(self.config)
+        self.assert_status(mock_ping, False, 'ok')
+
+    def test_yesterdays_late_fired_action_is_ignored(self, mock_ping):
+        self.fire(minutes_ago=-60)  # 13:00, i.e. fired yesterday, before today's plan
+        monitoring.report(self.config)
+        self.assert_status(mock_ping, False, 'ok')
+
+    def test_unfired_and_no_actions_are_ok(self, mock_ping):
+        ScheduledPumpAction.objects.create(time=datetime.time(9, 0))
+        monitoring.report(self.config)
+        self.assert_status(mock_ping, False, 'ok')

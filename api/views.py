@@ -5,7 +5,6 @@ from django_filters import rest_framework as filters
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
 
 from . import actions, dispatcher
 from .models import MoistureReading, PumpAction, Configuration, ScheduledPumpAction, Schedule
@@ -85,7 +84,7 @@ class ConfigurationView(viewsets.ModelViewSet):
 
 
 class ScheduledPumpActionViewSet(viewsets.ModelViewSet):
-    queryset = ScheduledPumpAction.objects.all()
+    queryset = ScheduledPumpAction.objects.filter(fired_at__isnull=True)
     serializer_class = ScheduledPumpActionSerializer
 
 

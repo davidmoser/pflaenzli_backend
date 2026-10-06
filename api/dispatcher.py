@@ -47,20 +47,21 @@ def _fire_due_actions(config):
     The Arduino pump is asynchronous and idempotent: a start command returns immediately
     and the fixed-length pump cycle runs in the firmware loop. Firing several overdue
     actions in a burst would therefore collapse into a single watering, so after an outage
-    we trigger one cycle and discard all the overdue actions rather than re-firing each.
+    we trigger one cycle and mark all the overdue actions fired rather than re-firing each.
     In normal operation only one action is ever due per tick.
 
     The PumpAction record is written by the Arduino reporting its real on/off state to
     POST /api/pump (the same source as a manual pump), so we don't record one here.
+    Monitoring checks that the last fired action is followed by such a record.
     """
     now_time = planner.local_now().time()
-    due = ScheduledPumpAction.objects.filter(time__lte=now_time)
+    due = ScheduledPumpAction.objects.filter(fired_at__isnull=True, time__lte=now_time)
     count = due.count()
     if not count:
         return False
 
     actions.start_pump()
-    due.delete()
+    due.update(fired_at=now_time)
 
-    logger.info("Fired pump for %ss (cleared %d due action(s))", config.pump_duration, count)
+    logger.info("Fired pump for %ss (marked %d due action(s) fired)", config.pump_duration, count)
     return True

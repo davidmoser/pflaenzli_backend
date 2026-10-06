@@ -24,8 +24,9 @@ class PumpAction(models.Model):
 
 
 class ScheduledPumpAction(models.Model):
-    """One planned, not-yet-executed pump action for the current day (time only)."""
+    """Scheduled pump actions for the current day (time only)."""
     time = models.TimeField()
+    fired_at = models.TimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['time']
